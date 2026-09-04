@@ -48,25 +48,6 @@ The clone contains the framework source, default configuration, HTTP routes, vie
   ```
 </Accordion>
 
-## Choose a revision
-
-A normal clone checks out the repository's default branch. Confirm the active branch and current commit:
-
-```bash
-git branch --show-current
-git log -1 --oneline
-```
-
-The default branch follows active framework development. For a reproducible deployment, check out a release tag or tested commit instead of relying on a moving branch:
-
-```bash
-git checkout <tag-or-commit>
-```
-
-<Tip>
-  Keep the commit SHA with your deployment records so the exact framework revision can be restored later.
-</Tip>
-
 ## Install dependencies
 
 Resolve the packages declared by the repository:
@@ -75,21 +56,12 @@ Resolve the packages declared by the repository:
 dart pub get
 ```
 
-Run the analyzer and test suite before changing the framework:
-
-```bash
-dart analyze
-dart test
-```
-
-If either command fails on a clean clone, confirm the Dart version and inspect the reported package or platform requirement before continuing.
-
-## Run the bundled application
+## Run the Archery server
 
 Start the example server from the repository root:
 
 ```bash
-dart run example/main.dart
+dart run bin/server.dart
 ```
 
 The default example listens on the port configured by `lib/src/config/server.json`, falling back to port `5502`.
@@ -97,7 +69,7 @@ The default example listens on the port configured by `lib/src/config/server.jso
 Open the application in a browser or request it from another terminal:
 
 ```bash
-curl -i http://localhost:5502/
+curl -i http://localhost:5501/
 ```
 
 Stop the development server with `Ctrl+C`.
@@ -117,18 +89,7 @@ The most useful starting locations are:
 | `lib/src/database/` | Models, migrations, drivers, pivots, and seeders |
 | `test/` | Framework test suite |
 
-The repository includes more functionality than the minimal server used in the Quickstart. Begin with the bundled example to verify the clone, then use the Quickstart to understand the smallest boot sequence.
-
-## Update the clone
-
-Pull upstream changes and refresh dependencies:
-
-```bash
-git pull --ff-only
-dart pub get
-```
-
-Review the changelog and rerun `dart analyze` and `dart test` before adopting framework changes.
+The repository includes more functionality than the minimal server used in the Quickstart. 
 
 <Warning>
   Do not commit passwords, database credentials, AWS keys, or production secrets into the repository's JSON configuration files. Inject secrets through the deployment environment.
