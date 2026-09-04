@@ -1,0 +1,68 @@
+---
+title: "Create, Query, Update, and Relate Archery Data Models"
+sidebarTitle: "ORM"
+description: "Define model serialization and constructors, run CRUD queries across disks, use instance operations, and express direct and pivot relationships."
+---
+
+The Archery ORM presents one model API over several storage backends; you will define serializable models, run CRUD operations, and navigate relationships.
+
+## Define a model
+
+Extend `Model`, mix in `InstanceDatabaseOps<T>`, add a `fromJson` constructor, and implement `toJson()` plus `toMetaJson()`. SQL migrations can use a static column definition map.
+
+```dart lib/src/database/models/role.dart
+class Role extends Model with InstanceDatabaseOps<Role> {
+  late String name;
+  String? description;
+
+  Role.fromJson(Map<String, dynamic> json) : super.fromJson(json) {
+    name = json['name'];
+    description = json['description'];
+  }
+
+  static Map<String, String> columnDefinitions = {
+    'name': 'TEXT NOT NULL UNIQUE',
+    'description': 'TEXT',
+  };
+
+  @override
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'description': description,
+  };
+
+  @override
+  Map<String, dynamic> toMetaJson() => {
+    'id': id,
+    ...toJson(),
+  };
+}
+```
+
+## Query and persist
+
+```dart lib/src/http/routes/roles.dart
+final roles = await Model.all<Role>();
+final role = await Model.find<Role>(id: 1, disk: .sqlite);
+final admin = await Model.firstWhere<Role>(
+  field: 'name',
+  value: 'admin',
+);
+
+final created = await Model.create<Role>(
+  fromJson: {'name': 'editor'},
+);
+
+await created?.update(withJson: {'description': 'Edits content'});
+await created?.delete();
+```
+
+Static operations include `count`, `exists`, `where`, `whereIn`, `findOrFail`, `firstOrFail`, `store`, `patch`, `destroy`, and `truncate`.
+
+## Load relationships
+
+Models expose `hasOne`, `hasMany`, `belongsToOne`, and `belongsToMany`. Use `attach()` and `detach()` with a `ModelRelationshipType`; many-to-many operations also require a `PivotTable`.
+
+<Note>
+The default disk is `DatabaseDisk.file`. Pass `disk` explicitly when a request must use SQLite, Postgres, or S3.
+</Note>

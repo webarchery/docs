@@ -1,0 +1,48 @@
+---
+title: "Load and Override JSON Application Configuration Files"
+sidebarTitle: "Configuration"
+description: "Load JSON configuration files into AppConfig, read nested values with dotted keys, set runtime overrides, inspect copies, and reload from disk safely."
+---
+
+Archery configuration turns a directory of JSON files into a dotted-key repository; you will load, bind, read, override, and reload application settings.
+
+## Load configuration
+
+`AppConfig.create()` reads `lib/src/config` by default. Pass `path` to load another directory, then bind the result so framework services can resolve it.
+
+```dart example/main.dart
+final config = await AppConfig.create();
+app.container.singleton<AppConfig>(
+  factory: (_, [_]) => config,
+  eager: true,
+);
+```
+
+The repository includes `app.json`, `server.json`, and `db.json`. The example reads server settings with dotted keys.
+
+```dart bin/server.dart
+final port = config.get('server.port') ?? 5502;
+server.autoCompress = config.get('server.compress', true);
+```
+
+## Read and override values
+
+`get()` accepts an optional default. `set()` applies a runtime override, while `all()` returns a deep copy rather than the repository's mutable internal map.
+
+```dart lib/src/bootstrap.dart
+final environment = config.get('app.env', 'production');
+config.set('server.compress', true);
+final snapshot = config.all();
+```
+
+## Reload files
+
+Call `reload()` to rebuild configuration from disk. Set `keepOverrides: true` to reapply runtime values after loading.
+
+```dart lib/src/bootstrap.dart
+await config.reload(keepOverrides: true);
+```
+
+<Warning>
+Configuration keys must use valid dotted segments. Do not store secrets in committed JSON files; inject them through your deployment process and set them before dependent services boot.
+</Warning>

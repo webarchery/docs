@@ -1,0 +1,55 @@
+---
+title: "Handle Forms, Uploads, and HTTP Responses with Dart"
+sidebarTitle: "Requests"
+description: "Read query, JSON, URL-encoded, and multipart input; access uploaded files; then return JSON, text, views, redirects, or framework errors."
+---
+
+Archery extends `HttpRequest` with parsing and response helpers; you will read buffered form data and finish requests with the correct response type.
+
+## Read request data
+
+Call `request.form()` to access a `FormRequest`. Use `input()`, `all()`, `body()`, `file()`, `files()`, or the synchronous `query` getter. The parser supports JSON, URL-encoded forms, and multipart form data.
+
+```dart lib/src/http/routes/web.dart
+router.post('/profile', (request) async {
+  final form = request.form();
+  final name = await form.input('name');
+  final avatar = await form.file('avatar');
+
+  if (avatar != null && avatar.isImage) {
+    await avatar.saveToPublicDir('avatars');
+  }
+
+  return request.json({'name': name});
+});
+```
+
+`UploadedFile` also exposes `bytes`, `string`, `length`, `extension`, `isAudio`, and `isVideo`. You can save privately, stream to a response with range handling, or upload through the configured S3 client.
+
+## Write responses
+
+<CodeGroup>
+```dart lib/src/http/routes/api.dart
+router.get('/json', (request) async {
+  return request.json({'status': 'ok'});
+});
+```
+
+```dart lib/src/http/routes/api.dart
+router.get('/text', (request) async {
+  return request.text('hello world');
+});
+```
+
+```dart lib/src/http/routes/web.dart
+router.get('/', (request) async {
+  return request.view('welcome');
+});
+```
+</CodeGroup>
+
+Use `request.notFound()`, `request.unAuthenticated()`, or `request.unAuthorized()` for the built-in HTML error views. Redirect helpers include `redirect()`, `redirectBack()`, `redirectToLogin()`, and `redirectToDashboard()`.
+
+<Tip>
+The kernel buffers requests with a positive content length before middleware runs, so CSRF checks and your handler can inspect the same body.
+</Tip>

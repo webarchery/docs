@@ -1,0 +1,58 @@
+---
+title: "Resolve Application Services with the IoC Container"
+sidebarTitle: "Container"
+description: "Bind transient, singleton, eager, named, and existing services; resolve them safely, create child scopes, and register asynchronous cleanup callbacks."
+---
+
+The Archery IoC container owns application services and their lifetimes; you will register dependencies, resolve them, isolate scopes, and clean them up.
+
+## Register services
+
+Use `bind` for a new value on every resolution, `singleton` for one value per scope, and `bindInstance` for an object you already created. Factory callbacks receive the container and optional runtime options.
+
+```dart lib/src/providers/aws/s3_client_provider.dart
+base class S3ClientProvider extends Provider {
+  @override
+  Future<void> register(ServiceContainer container) async {
+    final s3Config = S3Config.fromMap(App().config.get('env.aws'));
+    final s3Client = S3Client(s3Config, debug: true);
+    container.bindInstance<S3Client>(s3Client);
+  }
+}
+```
+
+```dart example/main.dart
+final config = await AppConfig.create();
+app.container.singleton<AppConfig>(
+  factory: (_, [_]) => config,
+  eager: true,
+);
+```
+
+## Resolve and inspect
+
+```dart lib/src/http/routes/web.dart
+final router = app.make<Router>();
+final config = app.container.make<AppConfig>();
+final optionalClient = app.container.tryMake<S3Client>();
+
+if (app.container.contains<AppConfig>()) {
+  print(app.container.listRegistrations());
+}
+```
+
+`make<T>()` throws `ServiceContainerException.registrationNotFound` when no binding exists. Use `tryMake<T>()` when absence is expected. Pass `name` to registration and resolution methods when you need several implementations of one type.
+
+## Manage lifecycle
+
+Call `initialize()` to construct eager singletons and `allReady()` to await tracked asynchronous initialization. Register cleanup with `onDispose()` and call `dispose()` to run callbacks in reverse order.
+
+```dart lib/src/bootstrap.dart
+container.onDispose(() async {
+  await sqliteDatabase.close();
+});
+```
+
+<Note>
+`newScope()` inherits parent bindings but keeps its own singleton instances, which makes it suitable for request or feature isolation.
+</Note>

@@ -1,0 +1,56 @@
+---
+title: "Render Blade-Style Views and Serve Static Web Assets"
+sidebarTitle: "Views"
+description: "Render escaped template data, use layouts, sections, includes, loops, conditions, and CSRF fields, then serve cached public assets securely."
+---
+
+Archery combines a Blade-style `TemplateEngine` with a guarded static file server; you will render dynamic HTML and deliver assets from the public directory.
+
+## Render a view
+
+Call `request.view()` with a dot-separated template name and optional data. The engine loads templates from `lib/src/http/views`, where `dashboard.index` maps to `dashboard/index.html`.
+
+```dart lib/src/http/routes/web.dart
+router.get('/', (request) async {
+  return request.view('welcome', {
+    'title': 'Welcome',
+  });
+});
+```
+
+The engine supports escaped `{{ value }}` interpolation, raw `{!! value !!}` interpolation, `@extends`, `@section`, `@yield`, `@include`, `@foreach`, `@if`, `@else`, and `@csrf`.
+
+```dart lib/src/http/views/profile.html
+@extends('layouts.app')
+
+@section('content')
+  <h1>{{ title }}</h1>
+  <form method="POST" action="/profile">
+    @csrf
+    <input name="name" value="{{ user.name }}">
+  </form>
+@endsection
+```
+
+<Warning>
+Raw interpolation does not escape HTML. Use `{!! value !!}` only for content you already trust or sanitize.
+</Warning>
+
+## Serve static files
+
+Resolve `StaticFilesServer` from the application and call `tryServe()` before kernel dispatch. The default root is `lib/src/http/public`.
+
+```dart bin/server.dart
+final staticFilesServer = app.make<StaticFilesServer>();
+
+await for (final request in server) {
+  if (await staticFilesServer.tryServe(request)) continue;
+  await kernel.handle(request);
+}
+```
+
+The server handles MIME types, `Last-Modified`, `If-Modified-Since`, byte ranges, `HEAD`, and path sanitization. It serves only `GET` and `HEAD` requests and returns `false` when no asset matches.
+
+<Tip>
+Set `TemplateEngine.shouldCache` to `false` during template development, and call `clearCache()` when you need to invalidate compiled content explicitly.
+</Tip>

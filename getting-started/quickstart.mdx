@@ -1,0 +1,70 @@
+---
+title: "Install Archery and Run Your First Dart Web Server"
+sidebarTitle: "Quickstart"
+description: "Set up an Archery project, load configuration, boot providers, register a route, and accept HTTP requests through the framework kernel."
+---
+
+The Archery quickstart takes you from a Dart package dependency to a running `dart:io` server; you will assemble the same boot sequence used by the bundled example.
+
+<Steps>
+  <Step title="Add Archery">
+    Add the package to `pubspec.yaml`, then fetch dependencies with `dart pub get`. Archery 1.5.0 requires Dart SDK `^3.10.0`.
+
+```dart pubspec.yaml
+dependencies:
+  archery: ^1.5.0
+```
+  </Step>
+  <Step title="Create and configure the app">
+    Load JSON files from `lib/src/config`, bind the resulting configuration as an eager singleton, then boot registered providers.
+
+```dart bin/server.dart
+import 'package:archery/archery/archery.dart';
+
+Future<void> main(List<String> args) async {
+  final app = App();
+  final config = await AppConfig.create();
+  app.container.singleton<AppConfig>(
+    factory: (_, [_]) => config,
+    eager: true,
+  );
+
+  await app.boot();
+}
+```
+  </Step>
+  <Step title="Register a route and kernel">
+    Resolve the framework router after boot, define a handler, and construct the HTTP kernel.
+
+```dart bin/server.dart
+final router = app.make<Router>();
+router.get('/health', (request) async {
+  return request.json({'status': 'ok'});
+});
+
+final kernel = AppKernel(router: router);
+```
+  </Step>
+  <Step title="Listen for requests">
+    Bind the server, let the static file server try first, and send all other requests through the kernel.
+
+```dart bin/server.dart
+final port = config.get('server.port') ?? 5502;
+final staticFilesServer = app.make<StaticFilesServer>();
+final server = await HttpServer.bind(
+  InternetAddress.loopbackIPv4,
+  port,
+  shared: true,
+);
+
+await for (final request in server) {
+  if (await staticFilesServer.tryServe(request)) continue;
+  await kernel.handle(request);
+}
+```
+  </Step>
+</Steps>
+
+<Tip>
+Import `package:archery/archery/archery.dart` to use the framework exports and the required `dart:io` types from one entry point.
+</Tip>

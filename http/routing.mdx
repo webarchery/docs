@@ -1,0 +1,59 @@
+---
+title: "Define Typed Routes, Groups, and HTTP Methods Clearly"
+sidebarTitle: "Routing"
+description: "Register five HTTP methods, compose route groups, read typed path values, attach middleware, and understand Archery's matching priority."
+---
+
+The Archery router maps requests to asynchronous Dart handlers; you will define routes, share prefixes and middleware, and consume validated path parameters.
+
+## Register methods
+
+`Router` provides `get`, `post`, `put`, `patch`, and `delete`. Each accepts a path, a `Future<dynamic> Function(HttpRequest)` handler, and optional route middleware.
+
+```dart lib/src/http/routes/api.dart
+void apiRoutes(Router router) {
+  router.group(prefix: '/api', routes: () {
+    router.get('/text', (request) async {
+      return request.text('hello world');
+    });
+
+    router.get('/json', (request) async {
+      return request.json({
+        'name': 'Archery Web Framework',
+        'version': '1.5.0',
+      });
+    });
+  });
+}
+```
+
+## Group related routes
+
+Groups combine nested prefixes and prepend their middleware to route-specific middleware.
+
+```dart lib/src/http/routes/api.dart
+router.group(prefix: '/api', middleware: [], routes: () {
+  router.get('/user', middleware: [Auth.middleware], (request) async {
+    return request.json(await request.user);
+  });
+});
+```
+
+## Use typed parameters
+
+Declare parameters as `{name:type}`. Supported types are `int`, `double`, `uuid`, and `string`. Retrieve the coerced value through `RouteParams.get<T>()`.
+
+```dart lib/src/http/routes/web.dart
+router.get('/users/{id:int}', (request) async {
+  final id = RouteParams.get<int>('id');
+  return request.json({'id': id});
+});
+```
+
+<Note>
+The router tries exact static routes before dynamic routes. It normalizes trailing slashes and accepts `_method` from the query string as a method override.
+</Note>
+
+<Warning>
+An unknown request method falls back to `GET` in the current router implementation. Restrict methods at your reverse proxy if you require rejection instead.
+</Warning>

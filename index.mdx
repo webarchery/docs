@@ -1,0 +1,41 @@
+---
+title: "Build Dart Web Applications with Archery Framework"
+sidebarTitle: "Introduction"
+description: "Meet Archery, a Dart-native web framework with routing, providers, templates, authentication, sessions, and a multi-driver ORM built on dart:io."
+---
+
+Archery gives you a Laravel-inspired application structure while staying native to `dart:io`; you will learn where its major features fit and how to start building with them.
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="getting-started/quickstart">
+    Install dependencies, boot the application, register routes, and serve your first response.
+  </Card>
+  <Card title="Architecture" icon="sitemap" href="getting-started/architecture">
+    Follow a request through the server, kernel, middleware pipeline, router, and handler.
+  </Card>
+  <Card title="Routing" icon="route" href="http/routing">
+    Define HTTP methods, groups, typed parameters, and route middleware.
+  </Card>
+  <Card title="ORM" icon="database" href="data/orm">
+    Create models and use the same operations across four storage drivers.
+  </Card>
+</CardGroup>
+
+<Steps>
+  <Step title="Get the package">
+    Add Archery to your Dart project and fetch its dependencies.
+  </Step>
+  <Step title="Boot the application">
+    Create `App`, load `AppConfig`, register providers, and call `app.boot()`.
+  </Step>
+  <Step title="Connect the HTTP layer">
+    Resolve `Router` and `StaticFilesServer`, create `AppKernel`, then pass incoming requests through static serving and the kernel.
+  </Step>
+  <Step title="Build your features">
+    Add routes, views, models, middleware, authentication, sessions, and CSRF protection as your application requires.
+  </Step>
+</Steps>
+
+<Info>
+Archery 1.5.0 describes itself as stable alpha and early production software. Review the deployment guidance before exposing an application publicly.
+</Info>

@@ -1,0 +1,60 @@
+---
+title: "Deploy Archery Applications Safely to Production Now"
+sidebarTitle: "Deployment"
+description: "Prepare an Archery server for production with HTTPS, secure cookies, Postgres, request limits, compression, proxying, and graceful shutdown."
+---
+
+Archery deployment uses the same `dart:io` server you run locally; you will apply the repository's production guidance and preserve application cleanup.
+
+## Choose production defaults
+
+- Put the server behind HTTPS with a reverse proxy such as NGINX or Caddy.
+- Prefer Postgres for production database workloads.
+- Configure body size limits at the proxy or server boundary.
+- Keep authentication cookies secure and HTTP-only. `AuthSession.login()` already creates its cookie with `httpOnly`, `secure`, and `SameSite.lax`.
+- Set explicit response security headers and restrict CORS to origins your application trusts.
+
+<Warning>
+The bundled server sends `Access-Control-Allow-Origin: *`. Replace that development-friendly value before serving authenticated browser traffic.
+</Warning>
+
+## Configure the listener
+
+The example reads the port and compression setting from `AppConfig` and enables shared binding.
+
+```dart bin/server.dart
+final port = config.get('server.port') ?? 5502;
+
+final server = await HttpServer.bind(
+  InternetAddress.loopbackIPv4,
+  port,
+  shared: true,
+);
+
+server.autoCompress = config.get('server.compress', true);
+server.defaultResponseHeaders.clear();
+server.defaultResponseHeaders.add('X-Content-Type-Options', 'nosniff');
+server.defaultResponseHeaders.add('X-Frame-Options', 'SAMEORIGIN');
+```
+
+Bind to loopback when a local reverse proxy terminates public connections. Choose a different `InternetAddress` only when your network design requires direct exposure.
+
+## Shut down resources
+
+Call `App.shutdown()` when startup or runtime orchestration fails. In the current release this changes application status and logs shutdown. Close your server and external resources explicitly.
+
+```dart bin/server.dart
+try {
+  // Bind and serve requests.
+} catch (error, stack) {
+  App().archeryLogger.error('Error booting server', {
+    'error': error.toString(),
+    'stack': stack.toString(),
+  });
+  await App().shutdown();
+}
+```
+
+<Info>
+Archery identifies the current release as stable alpha and early production. Load test your application and review framework upgrades before each deployment.
+</Info>

@@ -1,0 +1,63 @@
+---
+title: "Protect Stateful Forms with Sessions and CSRF Tokens"
+sidebarTitle: "Sessions And CSRF"
+description: "Initialize guest sessions, store flash data, bind CSRF tokens to sessions, render hidden form fields, and validate state-changing browser requests."
+---
+
+Archery guest sessions support flash messages and help associate rendered forms with requests; you will initialize sessions, render tokens, and validate submissions.
+
+## Start guest sessions
+
+Add `Sessions.middleware` to browser routes. `Session.init()` skips paths under `/api/`, creates or restores a persisted session, tracks it in the container's `List<Session>`, and uses the `archery_guest_session` cookie.
+
+```dart lib/src/http/routes/web.dart
+router.group(middleware: [Sessions.middleware], routes: () {
+  router.get('/', (request) async {
+    return request.view('welcome');
+  });
+});
+```
+
+The request exposes its active guest session as `request.thisSession`. Session records hold `data`, `errors`, `flashMessages`, an optional `user`, and the CSRF token.
+
+## Enable CSRF verification
+
+Place `VerifyCsrfToken.middleware` in the global kernel. It bypasses `/api/`, allows reading methods, and validates state-changing requests against the `archery_csrf_token` cookie.
+
+```dart example/main.dart
+final kernel = AppKernel(
+  router: router,
+  middleware: [
+    FlashMessaging.middleware,
+    VerifyCsrfToken.middleware,
+  ],
+);
+```
+
+Render `@csrf` inside each state-changing HTML form. `request.view()` prepares the session token for the template engine, which replaces the directive with a hidden `_token` input.
+
+```dart lib/src/http/views/profile.html
+<form method="POST" action="/profile">
+  @csrf
+  <input type="text" name="name">
+  <button type="submit">Save</button>
+</form>
+```
+
+The middleware reads `_token` from form input and compares it with the CSRF cookie. It returns a 403 response when either value is missing or they do not match. Header token lookup is not enabled in the current source.
+
+## Flash short-lived values
+
+```dart lib/src/http/routes/profile.dart
+request.flash(
+  key: 'status',
+  message: 'Profile updated successfully.',
+);
+return request.redirectBack();
+```
+
+Use `FlashMessageType.data` or `FlashMessageType.error` to select the session map. Install `FlashMessaging.middleware` so short-lived values advance and clear across requests.
+
+<Warning>
+Do not add `Sessions.middleware` to `/api/` routes and expect a session. `Session.init()` intentionally returns `null` for that prefix.
+</Warning>

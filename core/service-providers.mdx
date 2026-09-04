@@ -1,0 +1,54 @@
+---
+title: "Register and Boot Services with Provider Lifecycles"
+sidebarTitle: "Providers"
+description: "Organize application startup into providers, bind services during registration, perform asynchronous boot work, group providers, and handle shutdown."
+---
+
+Archery service providers divide setup into registration and boot phases; you will package bindings and startup work without hiding application order.
+
+## Implement a provider
+
+Override `register()` for service bindings. Override `boot()` for asynchronous work that may resolve services after all providers have registered.
+
+```dart lib/src/providers/aws/s3_client_provider.dart
+base class S3ClientProvider extends Provider {
+  @override
+  Future<void> register(ServiceContainer container) async {
+    final s3Config = S3Config.fromMap(App().config.get('env.aws'));
+    final s3Client = S3Client(s3Config, debug: true);
+    container.bindInstance<S3Client>(s3Client);
+  }
+}
+```
+
+## Register providers
+
+Add a provider directly with `app.register()` or organize providers with `app.registerGroup()`.
+
+```dart example/main.dart
+app.registerGroup('migrations', [
+  SqliteMigrationsProvider(),
+  // PgsqlMigrationsProvider(),
+  // JsonFileModelsMigrationsProvider(),
+]);
+
+await app.boot();
+```
+
+Archery invokes a provider's `register()` when you add it. During `boot()`, it initializes eager container services and then invokes each provider's `boot()` method. Registering the same provider instance twice raises `ProviderException.duplicateRegistration`.
+
+## React to startup and shutdown
+
+Register a synchronous post-boot callback with `onBooted()`. Use container disposal callbacks for resources that must close when `App.shutdown()` runs.
+
+```dart lib/src/bootstrap.dart
+app.onBooted(() {
+  print('Application booted');
+});
+
+await app.shutdown();
+```
+
+<Tip>
+Keep `register()` focused on bindings. Put migrations, network initialization, and other asynchronous startup operations in `boot()`.
+</Tip>

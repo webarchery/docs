@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "name": "Archery",
-  "theme": "mint",
+  "theme": "maple",
   "colors": {
     "primary": "#16A34A",
     "light": "#4ADE80",
@@ -15,17 +15,36 @@
           {
             "group": "Getting Started",
             "pages": [
-              "introduction",
-              "quickstart",
-              "architecture"
+              "index",
+              "getting-started/quickstart",
+              "getting-started/architecture",
+              "getting-started/deployment"
             ]
           },
           {
-            "group": "Core Concepts",
+            "group": "HTTP Layer",
             "pages": [
-              "application",
-              "service-providers",
-              "ioc-container"
+              "http/routing",
+              "http/requests-responses",
+              "http/middleware",
+              "http/views-static-files"
+            ]
+          },
+          {
+            "group": "Application Core",
+            "pages": [
+              "core/container",
+              "core/service-providers",
+              "core/configuration"
+            ]
+          },
+          {
+            "group": "Data And Security",
+            "pages": [
+              "data/orm",
+              "data/database-drivers",
+              "security/authentication",
+              "security/sessions-csrf"
             ]
           }
         ]

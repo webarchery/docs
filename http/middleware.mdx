@@ -1,0 +1,64 @@
+---
+title: "Compose Global and Route Middleware Pipelines Safely"
+sidebarTitle: "Middleware"
+description: "Create Archery HTTP middleware, order global and route-specific layers, continue with next, and apply built-in session, CSRF, CORS, and auth guards."
+---
+
+Archery middleware wraps request dispatch with asynchronous functions; you will create pipeline stages and place them globally, on groups, or on individual routes.
+
+## Write middleware
+
+An `HttpMiddleware` receives the request and a callback. Await `next()` to continue, or return a response early to stop the chain. The built-in session middleware shows the minimal form.
+
+```dart lib/archery/core/http/middleware/session_middleware.dart
+static Future<dynamic> middleware(
+  HttpRequest request,
+  Future<void> Function() next,
+) async {
+  await Session.init(request);
+  return await next();
+}
+```
+
+## Choose its scope
+
+<CodeGroup>
+```dart bin/server.dart
+final kernel = AppKernel(
+  router: router,
+  middleware: [
+    FlashMessaging.middleware,
+    VerifyCsrfToken.middleware,
+  ],
+);
+```
+
+```dart lib/src/http/routes/web.dart
+router.group(middleware: [Sessions.middleware], routes: () {
+  router.get('/', (request) async {
+    return request.view('welcome');
+  });
+});
+```
+
+```dart lib/src/http/routes/api.dart
+router.get('/user', middleware: [Auth.middleware], (request) async {
+  return request.json(await request.user);
+});
+```
+</CodeGroup>
+
+Global middleware executes in `AppKernel` list order. Group middleware accumulates from outer to inner groups, followed by middleware declared directly on the route.
+
+## Built-in middleware
+
+- `Sessions.middleware` initializes guest sessions outside `/api/`.
+- `FlashMessaging.middleware` advances and clears short-lived flash data.
+- `VerifyCsrfToken.middleware` checks tokens on state-changing requests.
+- `Cors.middleware` applies configured cross-origin headers.
+- `Auth.middleware` protects authenticated routes.
+- `Guest.middleware` redirects authenticated visitors away from guest-only pages.
+
+<Warning>
+Always await `next()` when later middleware or the route handler must finish before your middleware returns.
+</Warning>

@@ -1,0 +1,61 @@
+---
+title: "Authenticate Users with Secure Session-Based Login"
+sidebarTitle: "Authentication"
+description: "Register built-in auth routes, hash and verify passwords with PBKDF2, log users in and out, resolve the current user, and guard endpoints."
+---
+
+Archery authentication combines persisted users with in-memory and persisted auth sessions; you will register login flows, verify passwords, and protect routes.
+
+## Register auth routes
+
+Call `authRoutes(router)` after resolving your router. It registers guest-only `GET /login` and `GET /register` pages plus their `POST` handlers.
+
+```dart example/main.dart
+final router = app.make<Router>();
+authRoutes(router);
+webRoutes(router);
+apiRoutes(router);
+```
+
+The registration handler validates email, name, and password; creates a `User`; hashes the password; and redirects through the included response helpers.
+
+## Hash passwords
+
+Use `Auth.hashPassword()` before persistence and `Auth.verifyPassword()` for an explicit comparison. The underlying `Hasher` uses PBKDF2-HMAC-SHA256 with a random salt, 25,000 iterations, a 32-byte key, a versioned string format, and constant-time comparison.
+
+```dart lib/src/http/routes/register.dart
+final hash = Auth.hashPassword(key: password);
+final matches = Auth.verifyPassword(key: password, hash: hash);
+```
+
+## Log in and resolve users
+
+```dart lib/src/http/routes/login.dart
+final authenticated = await Auth.login(
+  request: request,
+  email: email,
+  password: password,
+);
+
+if (authenticated) {
+  return request.redirectToDashboard();
+}
+
+return request.redirectBack();
+```
+
+Use `await Auth.check(request)` to test authentication, `await Auth.user(request)` or `await request.user` to load the current user, and `await Auth.logout(request)` to end the session.
+
+## Guard routes
+
+```dart lib/src/http/routes/api.dart
+router.get('/user', middleware: [Auth.middleware], (request) async {
+  return request.json(await request.user);
+});
+```
+
+`Auth.middleware` redirects invalid sessions to login. `Guest.middleware` redirects authenticated users away from login and registration pages.
+
+<Info>
+The `archery_session` cookie is created with `httpOnly`, `secure`, and `SameSite.lax`. Serve authentication flows over HTTPS so browsers send the secure cookie.
+</Info>

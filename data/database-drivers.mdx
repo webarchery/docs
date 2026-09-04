@@ -1,0 +1,65 @@
+---
+title: "Choose and Configure All Four Archery Storage Drivers"
+sidebarTitle: "Drivers"
+description: "Compare JSON files, SQLite, Postgres, and S3 storage; register migrations and required services; then select a DatabaseDisk for each model operation."
+---
+
+Archery database drivers back the shared `Model` API with four storage strategies; you will choose a disk, migrate models, and supply each driver's dependencies.
+
+| Driver | `DatabaseDisk` value | Identifier used by `find` | Recommended role |
+| --- | --- | --- | --- |
+| JSON file | `.file` | UUID string | Local development and small applications |
+| SQLite | `.sqlite` | Integer ID | Small to medium applications |
+| Postgres | `.pgsql` | Integer ID | Production workloads |
+| S3 JSON | `.s3` | UUID string | Backup, experimental, or niche storage |
+
+## Register migrations
+
+The repository provides provider classes that migrate its bundled models during application boot.
+
+```dart example/main.dart
+app.registerGroup('migrations', [
+  SqliteMigrationsProvider(),
+  // PgsqlMigrationsProvider(),
+  // JsonFileModelsMigrationsProvider(),
+  // S3MigrationsProvider(),
+]);
+```
+
+For your own model, call the matching driver migration with its constructor. SQL drivers also accept column definitions.
+
+<CodeGroup>
+```dart lib/src/database/migrations/sqlite.dart
+await SQLiteModel.migrate<Role>(
+  constructor: Role.fromJson,
+  columnDefinitions: Role.columnDefinitions,
+);
+```
+
+```dart lib/src/database/migrations/postgres.dart
+await PostgresModel.migrate<Role>(
+  constructor: Role.fromJson,
+  columnDefinitions: Role.columnDefinitions,
+);
+```
+
+```dart lib/src/database/migrations/files.dart
+await JsonFileModel.migrate<Role>(constructor: Role.fromJson);
+await S3JsonFileModel.migrate<Role>(constructor: Role.fromJson);
+```
+</CodeGroup>
+
+## Select a driver
+
+```dart lib/src/http/routes/users.dart
+final local = await Model.find<User>(id: 'uuid-value');
+final sqlite = await Model.find<User>(id: 1, disk: .sqlite);
+final postgres = await Model.find<User>(id: 1, disk: .pgsql);
+final s3 = await Model.find<User>(id: 'uuid-value', disk: .s3);
+```
+
+SQLite and Postgres connections are registered during application boot from `db.sqlite` and `db.pgsql` configuration. S3 requires a registered `S3Client` and reads its storage configuration through `AppConfig`.
+
+<Warning>
+Use the correct identifier type for the selected driver. File and S3 lookups use UUID strings, while SQLite and Postgres lookups use integer IDs.
+</Warning>

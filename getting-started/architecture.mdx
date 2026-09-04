@@ -1,0 +1,54 @@
+---
+title: "Understand the Archery Application Request Lifecycle"
+sidebarTitle: "Architecture"
+description: "Trace how the application, providers, container, kernel, middleware, router, handlers, templates, and models cooperate for each request."
+---
+
+Archery uses an explicit application and HTTP lifecycle; you will see what gets prepared at startup and how each incoming request reaches your handler.
+
+## Application startup
+
+Create the singleton `App`, bind configuration, register provider groups, and call `boot()`. Booting registers Archery's default services, initializes databases, runs provider registration, initializes eager container bindings, and then boots providers.
+
+```dart example/main.dart
+final app = App();
+final config = await AppConfig.create();
+app.container.singleton<AppConfig>(factory: (_, [_]) => config, eager: true);
+
+app.registerGroup('migrations', [
+  SqliteMigrationsProvider(),
+]);
+
+await app.boot();
+```
+
+## Request lifecycle
+
+<Steps>
+  <Step title="Accept the request">
+    `HttpServer` yields a `HttpRequest`. Give `StaticFilesServer.tryServe()` the first chance to handle public assets.
+  </Step>
+  <Step title="Run global middleware">
+    `AppKernel.handle()` buffers request bodies with content, then invokes global middleware in list order.
+  </Step>
+  <Step title="Dispatch the route">
+    `Router.dispatch()` checks an exact static route, then typed dynamic routes, and finally returns the framework 404 response.
+  </Step>
+  <Step title="Produce the response">
+    Your handler uses request extensions such as `json()`, `text()`, `view()`, or a redirect helper to write and close the response.
+  </Step>
+</Steps>
+
+```dart example/main.dart
+final kernel = AppKernel(
+  router: router,
+  middleware: [
+    FlashMessaging.middleware,
+    VerifyCsrfToken.middleware,
+  ],
+);
+```
+
+<Note>
+Global middleware runs before route middleware. In either pipeline, call and await `next()` when the request should continue.
+</Note>
