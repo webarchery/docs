@@ -59,7 +59,7 @@
   <section id="getter">
     <section class="multi-line-signature">
       
-      <span class="returntype"><a href="https://api.dart.dev/stable/3.10.9/archery_archery/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.dart.dev/stable/3.10.9/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../../archery_archery/Role-class.html">Role</a></span>&gt;</span></span>&gt;</span></span>
+      <span class="returntype"><a href="https://api.flutter.dev/flutter/dart-async/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../../archery_archery/Role-class.html">Role</a></span>&gt;</span></span>&gt;</span></span>
       get
       <span class="name ">roles</span>
       
@@ -79,7 +79,7 @@ print(roles.length);
 <section class="summary source-code" id="source">
   <h2><span>Implementation</span></h2>
   <pre class="language-dart"><code class="language-dart">Future&lt;List&lt;Role&gt;&gt; get roles async {
-  return belongsToMany&lt;Role&gt;(table: UserRolePivotTable());
+  return await belongsToMany&lt;Role&gt;(table: UserRolePivotTable());
 }</code></pre>
 </section>
 
@@ -110,7 +110,7 @@ print(roles.length);
 <footer>
   <span class="no-break">
     archery
-      1.5.0
+      1.6.0
   </span>
   
 </footer>

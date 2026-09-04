@@ -82,6 +82,7 @@ and that the <code>User</code> model is available for persistence.</p>
   <pre class="language-dart"><code class="language-dart">void authRoutes(Router router) {
   router.group(
     routes: () {
+
       router.get(&#39;&#47;login&#39;, middleware: [Guest.middleware], (request) async {
         return request.view(&quot;auth.login&quot;);
       });
@@ -91,12 +92,13 @@ and that the <code>User</code> model is available for persistence.</p>
       });
 
       router.post(&#39;&#47;register&#39;, (request) async {
+
         try {
           final validated = await request.validateAll([{
               &quot;email&quot;: [
                 Rule.required,
-                Rule.email,
                 Rule.max(255),
+                Rule.email,
                 Rule.unique&lt;User&gt;(column: &quot;email&quot;)],}, {
 
               &quot;name&quot;: [
@@ -114,12 +116,12 @@ and that the <code>User</code> model is available for persistence.</p>
             return request.redirectBack();
           }
 
-          final form = request.form();
-          final name = await form.input(&#39;name&#39;);
-          final email = await form.input(&#39;email&#39;);
-          final password = await form.input(&#39;password&#39;);
+          final name = await request.form.input(&#39;name&#39;);
+          final email = await request.form.input(&#39;email&#39;);
+          final password = await request.form.input(&#39;password&#39;);
 
           final userRecord = await Model.firstWhere&lt;User&gt;(field: &quot;email&quot;, value: email);
+
           if (userRecord != null) {
             request.flash(key: &quot;error&quot;, message: &quot;User exists&quot;);
             return request.redirectToLogin();
@@ -129,6 +131,7 @@ and that the <code>User</code> model is available for persistence.</p>
           await user.save();
           request.flash(key: &quot;success&quot;, message: &quot;Account created&quot;);
           return request.redirectToLogin();
+
         } catch (e, stack) {
           App().archeryLogger.error(&quot;Registration error&quot;, {&quot;origin&quot;: &quot;authRoutes post &#47;register&quot;, &quot;error&quot;: e.toString(), &quot;stack&quot;: stack.toString()});
           request.flash(key: &quot;error&quot;, message: &quot;Something went wrong&quot;);
@@ -137,6 +140,7 @@ and that the <code>User</code> model is available for persistence.</p>
       });
 
       router.post(&#39;&#47;login&#39;, (request) async {
+
         try {
           final validated = await request.validateAll([{
 
@@ -155,11 +159,8 @@ and that the <code>User</code> model is available for persistence.</p>
             return request.redirectBack();
           }
 
-          final form = request.form();
-          final email = await form.input(&#39;email&#39;);
-          final password = await form.input(&#39;password&#39;);
 
-          if (await Auth.login(request: request, email: email, password: password)) {
+          if (await Auth.login(request)) {
             return request.redirectToDashboard();
           }
 
@@ -181,7 +182,7 @@ and that the <code>User</code> model is available for persistence.</p>
         prefix: &quot;&#47;user&quot;,
         middleware: [Auth.middleware],
         routes: () {
-          &#47;&#47; - grouped for profile &amp; dashboard crud
+          &#47;&#47; - grouped for profile &amp; dashboard crud endpoints
           router.group(
             prefix: &quot;&#47;profile&quot;,
             routes: () {
@@ -230,7 +231,7 @@ and that the <code>User</code> model is available for persistence.</p>
 <footer>
   <span class="no-break">
     archery
-      1.5.0
+      1.6.0
   </span>
   
 </footer>
