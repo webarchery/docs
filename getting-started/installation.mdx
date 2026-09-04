@@ -1,102 +1,145 @@
 ---
-title: "Install Archery"
+title: "Install Archery from GitHub"
 sidebarTitle: "Installation"
-description: "Prepare a Dart project, install Archery directly from GitHub, and create the default configuration and application directories."
+description: "Clone the Archery repository, install its Dart dependencies, run the test suite, and start the bundled example application."
 icon: "download"
 keywords:
-  - "install Archery"
-  - "Dart server framework"
+  - "clone Archery"
   - "Archery GitHub"
+  - "Dart server framework source"
 ---
 
-The current Archery source requires Dart 3.10 or later. This page prepares a new Dart package, installs Archery from GitHub, and creates the directories used throughout the documentation.
+Clone the Archery repository when you want the framework source, bundled example application, configuration, tests, and full Git history in one working directory.
+
+<Info>
+  This is the recommended path for exploring Archery, contributing to the framework, or building directly from the repository. It does not create a separate Dart console project.
+</Info>
 
 ## Prerequisites
 
-Confirm that the Dart SDK is installed:
+Install Git and Dart 3.10 or later, then confirm both commands are available:
 
 ```bash
-dart --version
 git --version
+dart --version
 ```
-
-The Dart version must be `3.10.0` or newer. Git is required so Dart can resolve the framework repository.
 
 <Card title="Install the Dart SDK" icon="dart-lang" href="https://dart.dev/get-dart">
-  Follow the official Dart installation instructions if the command is unavailable or reports an older version.
+  Follow the official Dart installation instructions if `dart` is unavailable or reports a version older than 3.10.
 </Card>
 
-## Create a Dart project
+## Clone the repository
+
+Clone Archery from GitHub and enter the repository:
 
 ```bash
-dart create -t console-full archery_app
-cd archery_app
+git clone https://github.com/webarchery/archery.git
+cd archery
 ```
 
-The project name must follow Dart package naming rules: lowercase words separated by underscores.
+The clone contains the framework source, default configuration, HTTP routes, views, database code, tests, and the bundled example entry point.
 
-## Add Archery from GitHub
+<Accordion title="Clone into a different directory name">
+  Pass the destination name as the final argument:
 
-Add Archery as a Git dependency in `pubspec.yaml`:
+  ```bash
+  git clone https://github.com/webarchery/archery.git my_archery_app
+  cd my_archery_app
+  ```
+</Accordion>
 
-```yaml
-dependencies:
-  archery:
-    git:
-      url: https://github.com/webarchery/archery.git
-      ref: main
-```
+## Choose a revision
 
-Resolve the repository and its dependencies:
+A normal clone checks out the repository's default branch. Confirm the active branch and current commit:
 
 ```bash
-dart pub get
+git branch --show-current
+git log -1 --oneline
 ```
 
-The `main` reference follows the latest framework development. For reproducible production builds, replace `main` with a release tag or full commit SHA that you have tested.
-
-## Create the application directories
-
-Archery does not require a code generator. Create the conventional directories used by its configuration, routes, templates, and public files:
+The default branch follows active framework development. For a reproducible deployment, check out a release tag or tested commit instead of relying on a moving branch:
 
 ```bash
-mkdir -p bin
-mkdir -p lib/src/config
-mkdir -p lib/src/http/routes
-mkdir -p lib/src/http/views
-mkdir -p lib/src/http/public
+git checkout <tag-or-commit>
 ```
 
-<Note>
-  `AppConfig.create()`, `TemplateEngine`, and `StaticFilesServer` use these locations by default. You can customize several paths later through their constructors or configuration.
-</Note>
+<Tip>
+  Keep the commit SHA with your deployment records so the exact framework revision can be restored later.
+</Tip>
 
-## Add server configuration
+## Install dependencies
 
-Create `lib/src/config/server.json`:
-
-```json
-{
-  "port": 5502,
-  "compress": true
-}
-```
-
-The filename becomes the first segment of each configuration key. These values are therefore available as `server.port` and `server.compress`.
-
-## Verify the installation
+Resolve the packages declared by the repository:
 
 ```bash
 dart pub get
+```
+
+Run the analyzer and test suite before changing the framework:
+
+```bash
 dart analyze
+dart test
 ```
 
-A newly created project may still contain its generated console example. The next page replaces that entry point with an Archery HTTP server.
+If either command fails on a clean clone, confirm the Dart version and inspect the reported package or platform requirement before continuing.
+
+## Run the bundled application
+
+Start the example server from the repository root:
+
+```bash
+dart run example/main.dart
+```
+
+The default example listens on the port configured by `lib/src/config/server.json`, falling back to port `5502`.
+
+Open the application in a browser or request it from another terminal:
+
+```bash
+curl -i http://localhost:5502/
+```
+
+Stop the development server with `Ctrl+C`.
+
+## Understand what was installed
+
+The most useful starting locations are:
+
+| Path | Purpose |
+| --- | --- |
+| `example/main.dart` | Complete application boot and server example |
+| `lib/archery/` | Framework implementation and public framework exports |
+| `lib/src/config/` | Default application configuration |
+| `lib/src/http/routes/` | Bundled web and API routes |
+| `lib/src/http/views/` | Server-rendered templates |
+| `lib/src/http/public/` | Public static assets |
+| `lib/src/database/` | Models, migrations, drivers, pivots, and seeders |
+| `test/` | Framework test suite |
+
+The repository includes more functionality than the minimal server used in the Quickstart. Begin with the bundled example to verify the clone, then use the Quickstart to understand the smallest boot sequence.
+
+## Update the clone
+
+Pull upstream changes and refresh dependencies:
+
+```bash
+git pull --ff-only
+dart pub get
+```
+
+Review the changelog and rerun `dart analyze` and `dart test` before adopting framework changes.
 
 <Warning>
-  Do not commit passwords, database credentials, AWS keys, or other secrets to JSON configuration files. Production secret injection is covered separately in the deployment documentation.
+  Do not commit passwords, database credentials, AWS keys, or production secrets into the repository's JSON configuration files. Inject secrets through the deployment environment.
 </Warning>
 
-<Card title="Run the quickstart" icon="rocket" href="/getting-started/quickstart">
-  Boot Archery and serve your first HTTP response.
-</Card>
+<CardGroup cols={2}>
+  <Card title="Run the quickstart" icon="rocket" href="/getting-started/quickstart">
+    Reduce the bundled application to Archery's essential boot sequence.
+  </Card>
+
+  <Card title="Project structure" icon="folder-tree" href="/getting-started/project-structure">
+    Learn where the repository's application components belong.
+  </Card>
+</CardGroup>
