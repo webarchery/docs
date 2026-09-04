@@ -1,15 +1,15 @@
 ---
 title: "Install Archery"
 sidebarTitle: "Installation"
-description: "Prepare a Dart project, install Archery 1.5.0, and create the default configuration and application directories."
+description: "Prepare a Dart project, install Archery directly from GitHub, and create the default configuration and application directories."
 icon: "download"
 keywords:
   - "install Archery"
   - "Dart server framework"
-  - "Archery 1.5.0"
+  - "Archery GitHub"
 ---
 
-Archery 1.5.0 requires Dart 3.10 or later. This page prepares a new Dart package with the directories and configuration used throughout the documentation.
+The current Archery source requires Dart 3.10 or later. This page prepares a new Dart package, installs Archery from GitHub, and creates the directories used throughout the documentation.
 
 ## Prerequisites
 
@@ -17,9 +17,10 @@ Confirm that the Dart SDK is installed:
 
 ```bash
 dart --version
+git --version
 ```
 
-The reported version must be `3.10.0` or newer.
+The Dart version must be `3.10.0` or newer. Git is required so Dart can resolve the framework repository.
 
 <Card title="Install the Dart SDK" icon="dart-lang" href="https://dart.dev/get-dart">
   Follow the official Dart installation instructions if the command is unavailable or reports an older version.
@@ -34,20 +35,25 @@ cd archery_app
 
 The project name must follow Dart package naming rules: lowercase words separated by underscores.
 
-## Add Archery
+## Add Archery from GitHub
 
-Install the current package from pub.dev:
-
-```bash
-dart pub add archery
-```
-
-This adds a compatible constraint to `pubspec.yaml` and resolves the package dependencies. The dependency should resemble:
+Add Archery as a Git dependency in `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  archery: ^1.5.0
+  archery:
+    git:
+      url: https://github.com/webarchery/archery.git
+      ref: main
 ```
+
+Resolve the repository and its dependencies:
+
+```bash
+dart pub get
+```
+
+The `main` reference follows the latest framework development. For reproducible production builds, replace `main` with a release tag or full commit SHA that you have tested.
 
 ## Create the application directories
 
