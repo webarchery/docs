@@ -1,0 +1,103 @@
+---
+title: "Organize an Archery Application"
+sidebarTitle: "Project Structure"
+description: "Understand Archery’s conventional directories and decide where configuration, routes, providers, models, templates, and public assets belong."
+icon: "folder-tree"
+keywords:
+  - "Archery project structure"
+  - "Dart server directories"
+---
+
+Archery favors a conventional application structure without requiring generated files. A small project can begin with one server file and grow into focused route, provider, model, and view modules.
+
+## Recommended structure
+
+```text
+archery_app/
+├── bin/
+│   └── server.dart
+├── lib/
+│   └── src/
+│       ├── config/
+│       │   ├── app.json
+│       │   ├── server.json
+│       │   └── db.json
+│       ├── database/
+│       │   ├── migrations/
+│       │   └── models/
+│       ├── http/
+│       │   ├── middleware/
+│       │   ├── public/
+│       │   ├── routes/
+│       │   │   ├── api.dart
+│       │   │   └── web.dart
+│       │   └── views/
+│       │       ├── layouts/
+│       │       └── welcome.html
+│       └── providers/
+├── pubspec.yaml
+└── test/
+```
+
+This is a recommendation, not a requirement. Begin with only the directories your application uses.
+
+## Entry point
+
+`bin/server.dart` owns process-level orchestration:
+
+- Create and configure `App`
+- Register providers
+- Boot the application
+- Resolve the router and static file server
+- Construct `AppKernel`
+- Bind `HttpServer`
+- Handle shutdown failures
+
+Keep domain logic out of the entry point as the application grows.
+
+## Configuration
+
+`lib/src/config` is the default directory read by `AppConfig.create()`. Each JSON filename becomes a dotted-key namespace:
+
+| File | Example key | Purpose |
+| --- | --- | --- |
+| `app.json` | `app.env` | Application-wide behavior |
+| `server.json` | `server.port` | Listener and HTTP settings |
+| `db.json` | `db.sqlite` | Database-driver configuration |
+
+## HTTP code
+
+Place route registration functions in `lib/src/http/routes` and invoke them after resolving `Router`.
+
+```dart
+void apiRoutes(Router router) {
+  router.get('/api/health', (request) async {
+    return request.json({'status': 'ok'});
+  });
+}
+```
+
+Use `http/middleware` for reusable application middleware. Server-rendered templates belong in `http/views`; `request.view('dashboard.index')` resolves to `dashboard/index.html`.
+
+Public CSS, JavaScript, images, and other static assets belong in `http/public`, the default root used by `StaticFilesServer`.
+
+## Application services
+
+Use `providers` for service-container bindings and startup work. Database models and migrations can live under `database`. These locations are conventions for maintainability; providers and models are ordinary Dart types and can be organized differently when your domain requires it.
+
+## Tests
+
+Keep framework and application tests under `test`. Separate container/provider tests from HTTP behavior tests so boot failures and request failures are easy to diagnose.
+
+<Tip>
+  Prefer small route registration functions such as `webRoutes(router)` and `apiRoutes(router)` instead of defining every handler in `bin/server.dart`.
+</Tip>
+
+<CardGroup cols={2}>
+  <Card title="Architecture" icon="diagram-project" href="/getting-started/architecture">
+    Learn how these pieces cooperate at runtime.
+  </Card>
+  <Card title="Build a small app" icon="hammer" href="/getting-started/build-an-app">
+    Apply the structure to a working JSON API.
+  </Card>
+</CardGroup>

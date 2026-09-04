@@ -1,41 +1,76 @@
 ---
-title: "Build Dart Web Applications with Archery Framework"
+title: "Archery Documentation"
 sidebarTitle: "Introduction"
-description: "Meet Archery, a Dart-native web framework with routing, providers, templates, authentication, sessions, and a multi-driver ORM built on dart:io."
+description: "Build structured server-side Dart applications with Archery’s explicit application lifecycle, routing, middleware, templates, authentication, and multi-driver ORM."
+keywords:
+  - "Dart web framework"
+  - "server-side Dart"
+  - "Archery framework"
 ---
 
-Archery gives you a Laravel-inspired application structure while staying native to `dart:io`; you will learn where its major features fit and how to start building with them.
+Archery is a Laravel-inspired web framework built directly on `dart:io`. It provides the structure of a full framework—an application container, service providers, an HTTP kernel, middleware, routing, templates, authentication, sessions, and an ORM—while keeping the runtime explicit and readable.
+
+## When Archery is a good fit
+
+Use Archery when you want to build a server-rendered website, JSON API, internal application, or small service in Dart without assembling the application lifecycle from unrelated packages.
+
+Archery is designed around four ideas:
+
+- **Explicit over magical.** Application startup and request handling remain visible in your code.
+- **Framework, not micro-router.** Routing is one part of a larger application structure.
+- **Dart-native.** The server runs directly on `dart:io`.
+- **Readable and adaptable.** Framework components can be inspected, extended, or replaced through providers and the container.
+
+## What is included
 
 <CardGroup cols={2}>
-  <Card title="Quickstart" icon="rocket" href="getting-started/quickstart">
-    Install dependencies, boot the application, register routes, and serve your first response.
+  <Card title="HTTP application layer" icon="route">
+    Typed routes, route groups, middleware pipelines, request parsing, response helpers, and static file serving.
   </Card>
-  <Card title="Architecture" icon="sitemap" href="getting-started/architecture">
-    Follow a request through the server, kernel, middleware pipeline, router, and handler.
+
+  <Card title="Application core" icon="cubes">
+    A service container, provider lifecycle, configuration repository, logging, boot hooks, and resource cleanup.
   </Card>
-  <Card title="Routing" icon="route" href="http/routing">
-    Define HTTP methods, groups, typed parameters, and route middleware.
+
+  <Card title="Server-rendered views" icon="window">
+    Blade-style layouts, sections, includes, conditions, loops, escaped output, and CSRF fields.
   </Card>
-  <Card title="ORM" icon="database" href="data/orm">
-    Create models and use the same operations across four storage drivers.
+
+  <Card title="Data and security" icon="shield-halved">
+    JSON, SQLite, Postgres, and S3 model storage together with sessions, authentication, password hashing, and CSRF protection.
   </Card>
 </CardGroup>
 
+## Follow the learning path
+
 <Steps>
-  <Step title="Get the package">
-    Add Archery to your Dart project and fetch its dependencies.
+  <Step title="Install Archery">
+    Confirm your Dart version, create a project, add the package, and establish the default application directories.
   </Step>
-  <Step title="Boot the application">
-    Create `App`, load `AppConfig`, register providers, and call `app.boot()`.
+  <Step title="Run the quickstart">
+    Boot the application, register a route, and serve your first response through the HTTP kernel.
   </Step>
-  <Step title="Connect the HTTP layer">
-    Resolve `Router` and `StaticFilesServer`, create `AppKernel`, then pass incoming requests through static serving and the kernel.
+  <Step title="Learn the project structure">
+    See which directories Archery uses by default and where application code belongs.
   </Step>
-  <Step title="Build your features">
-    Add routes, views, models, middleware, authentication, sessions, and CSRF protection as your application requires.
+  <Step title="Understand the architecture">
+    Follow startup and an incoming request through the container, providers, middleware, router, and handler.
+  </Step>
+  <Step title="Build a small application">
+    Extend the server into a small JSON API with typed parameters and parsed request data.
   </Step>
 </Steps>
 
-<Info>
-Archery 1.5.0 describes itself as stable alpha and early production software. Review the deployment guidance before exposing an application publicly.
-</Info>
+<Warning>
+  Archery 1.5.0 is a stable-alpha, early-production release. Its main APIs are usable, but internals and security hardening continue to evolve toward 2.0. Evaluate and load-test the framework for your workload before using it for mission-critical infrastructure.
+</Warning>
+
+<CardGroup cols={2}>
+  <Card title="Install Archery" icon="download" href="/getting-started/installation">
+    Prepare a new Dart project and add the framework.
+  </Card>
+
+  <Card title="Quickstart" icon="rocket" href="/getting-started/quickstart">
+    Run your first Archery server.
+  </Card>
+</CardGroup>

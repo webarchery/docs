@@ -19,8 +19,11 @@
             "group": "Getting Started",
             "pages": [
               "index",
+              "getting-started/installation",
               "getting-started/quickstart",
+              "getting-started/project-structure",
               "getting-started/architecture",
+              "getting-started/build-an-app",
               "getting-started/deployment"
             ]
           },
