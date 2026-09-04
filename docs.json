@@ -8,6 +8,28 @@
     "dark": "#15803D"
   },
   "navigation": {
-    "products": []
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "architecture"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "application",
+              "service-providers",
+              "ioc-container"
+            ]
+          }
+        ]
+      }
+    ]
   }
 }
