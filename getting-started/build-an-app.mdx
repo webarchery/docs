@@ -1,0 +1,146 @@
+---
+title: "Build a Small Archery Application"
+sidebarTitle: "Build a Small App"
+description: "Extend the quickstart into a runnable JSON message API with request parsing, typed route parameters, validation, and HTTP status codes."
+icon: "hammer"
+keywords:
+  - "Archery tutorial"
+  - "Dart JSON API"
+  - "Dart backend tutorial"
+---
+
+In this tutorial, you will extend the quickstart server into a small in-memory message API. The application demonstrates route registration, parsed request data, typed path parameters, validation, and JSON responses without introducing a database.
+
+<Info>
+  Begin with the working server from [Quickstart](/getting-started/quickstart). The in-memory messages in this tutorial are discarded whenever the process stops.
+</Info>
+
+## Define application state
+
+In `bin/server.dart`, add a list after resolving the router:
+
+```dart
+final router = app.make<Router>();
+
+final messages = <Map<String, dynamic>>[
+  {
+    'id': 1,
+    'message': 'Archery is running',
+  },
+];
+```
+
+## List messages
+
+Register a collection route:
+
+```dart
+router.get('/api/messages', (request) async {
+  return request.json({
+    'data': messages,
+    'count': messages.length,
+  });
+});
+```
+
+Start the server and test it:
+
+```bash
+curl http://localhost:5502/api/messages
+```
+
+## Read a typed route parameter
+
+Archery validates and coerces `{id:int}` before the handler runs. Retrieve the typed value through `RouteParams`:
+
+```dart
+router.get('/api/messages/{id:int}', (request) async {
+  final id = RouteParams.get<int>('id');
+
+  final matches = messages.where((item) => item['id'] == id);
+
+  if (matches.isEmpty) {
+    request.response.statusCode = HttpStatus.notFound;
+    return request.json({'error': 'Message not found'});
+  }
+
+  return request.json({'data': matches.first});
+});
+```
+
+Try an existing message:
+
+```bash
+curl http://localhost:5502/api/messages/1
+```
+
+## Parse and validate input
+
+`request.form()` supports JSON, URL-encoded, and multipart request bodies. Add a route that accepts a `message` value:
+
+```dart
+router.post('/api/messages', (request) async {
+  final form = request.form();
+  final message = (await form.input('message'))?.toString().trim();
+
+  if (message == null || message.isEmpty) {
+    request.response.statusCode = HttpStatus.unprocessableEntity;
+    return request.json({
+      'error': 'The message field is required',
+    });
+  }
+
+  final item = {
+    'id': messages.length + 1,
+    'message': message,
+  };
+
+  messages.add(item);
+  request.response.statusCode = HttpStatus.created;
+
+  return request.json({'data': item});
+});
+```
+
+Create a message with URL-encoded data:
+
+```bash
+curl -X POST http://localhost:5502/api/messages \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  --data "message=Build with Dart"
+```
+
+Or send JSON:
+
+```bash
+curl -X POST http://localhost:5502/api/messages \
+  -H "Content-Type: application/json" \
+  --data '{"message":"Build with Archery"}'
+```
+
+## Verify invalid input
+
+```bash
+curl -i -X POST http://localhost:5502/api/messages \
+  -H "Content-Type: application/json" \
+  --data '{}'
+```
+
+The handler returns status `422` and a JSON error. This validation is intentionally local to the tutorial; reusable request validation belongs in a dedicated form-request layer.
+
+## What you used
+
+- `Router.get()` and `Router.post()` to register HTTP methods
+- `{id:int}` and `RouteParams.get<int>()` for typed path data
+- `request.form()` for cached request parsing
+- `request.json()` for consistent JSON responses
+- `HttpStatus` values to communicate creation, validation failure, and missing records
+
+<CardGroup cols={2}>
+  <Card title="Routing" icon="route" href="/http/routing">
+    Learn route groups, matching priority, and middleware.
+  </Card>
+  <Card title="Requests" icon="inbox" href="/http/requests-responses">
+    Work with forms, JSON, files, and response helpers.
+  </Card>
+</CardGroup>

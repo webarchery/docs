@@ -1,28 +1,29 @@
 ---
-title: "Install Archery and Run Your First Dart Web Server"
+title: "Run Your First Archery Server"
 sidebarTitle: "Quickstart"
-description: "Set up an Archery project, load configuration, boot providers, register a route, and accept HTTP requests through the framework kernel."
+description: "Boot an Archery application, register a route, and serve HTTP requests through the framework kernel."
+keywords:
+  - "Archery quickstart"
+  - "Dart HTTP server"
+  - "Dart web server"
 ---
 
-The Archery quickstart takes you from a Dart package dependency to a running `dart:io` server; you will assemble the same boot sequence used by the bundled example.
+This quickstart builds the smallest useful Archery application: a configured `App`, one route, an HTTP kernel, and a `dart:io` server.
 
-<Steps>
-  <Step title="Add Archery">
-    Add the package to `pubspec.yaml`, then fetch dependencies with `dart pub get`. Archery 1.5.0 requires Dart SDK `^3.10.0`.
+<Info>
+  Complete [Installation](/getting-started/installation) first. The example assumes Archery is installed and `lib/src/config/server.json` exists.
+</Info>
 
-```dart pubspec.yaml
-dependencies:
-  archery: ^1.5.0
-```
-  </Step>
-  <Step title="Create and configure the app">
-    Load JSON files from `lib/src/config`, bind the resulting configuration as an eager singleton, then boot registered providers.
+## Create the server entry point
 
-```dart bin/server.dart
+Create `bin/server.dart`:
+
+```dart
 import 'package:archery/archery/archery.dart';
 
 Future<void> main(List<String> args) async {
   final app = App();
+
   final config = await AppConfig.create();
   app.container.singleton<AppConfig>(
     factory: (_, [_]) => config,
@@ -30,41 +31,90 @@ Future<void> main(List<String> args) async {
   );
 
   await app.boot();
+
+  final router = app.make<Router>();
+
+  router.get('/health', (request) async {
+    return request.json({
+      'status': 'ok',
+      'framework': 'archery',
+    });
+  });
+
+  final kernel = AppKernel(router: router);
+  final staticFiles = app.make<StaticFilesServer>();
+  final port = config.get('server.port') ?? 5502;
+
+  try {
+    final server = await HttpServer.bind(
+      InternetAddress.loopbackIPv4,
+      port,
+      shared: true,
+    );
+
+    server.autoCompress = config.get('server.compress', true);
+
+    print('Archery is running at http://localhost:$port');
+
+    await for (final request in server) {
+      if (await staticFiles.tryServe(request)) continue;
+      await kernel.handle(request);
+    }
+  } catch (error, stack) {
+    app.archeryLogger.error('Server failed', {
+      'error': error.toString(),
+      'stack': stack.toString(),
+    });
+    await app.shutdown();
+  }
 }
 ```
-  </Step>
-  <Step title="Register a route and kernel">
-    Resolve the framework router after boot, define a handler, and construct the HTTP kernel.
 
-```dart bin/server.dart
-final router = app.make<Router>();
-router.get('/health', (request) async {
-  return request.json({'status': 'ok'});
-});
+The framework entry point exports the Archery types used here together with the required `dart:io` types.
 
-final kernel = AppKernel(router: router);
+## Start the application
+
+```bash
+dart run bin/server.dart
 ```
-  </Step>
-  <Step title="Listen for requests">
-    Bind the server, let the static file server try first, and send all other requests through the kernel.
 
-```dart bin/server.dart
-final port = config.get('server.port') ?? 5502;
-final staticFilesServer = app.make<StaticFilesServer>();
-final server = await HttpServer.bind(
-  InternetAddress.loopbackIPv4,
-  port,
-  shared: true,
-);
+You should see:
 
-await for (final request in server) {
-  if (await staticFilesServer.tryServe(request)) continue;
-  await kernel.handle(request);
-}
+```text
+Archery is running at http://localhost:5502
 ```
-  </Step>
-</Steps>
+
+In another terminal, request the health endpoint:
+
+```bash
+curl http://localhost:5502/health
+```
+
+The server returns:
+
+```json
+{"status":"ok","framework":"archery"}
+```
+
+## What the server is doing
+
+1. `AppConfig.create()` loads JSON configuration from `lib/src/config`.
+2. The configuration repository is registered as an eager singleton.
+3. `app.boot()` prepares the framework and its registered providers.
+4. `Router` records the `GET /health` handler.
+5. `StaticFilesServer` receives the first opportunity to serve a public asset.
+6. `AppKernel` sends every remaining request through middleware and route dispatch.
 
 <Tip>
-Import `package:archery/archery/archery.dart` to use the framework exports and the required `dart:io` types from one entry point.
+  Keep the listener on `InternetAddress.loopbackIPv4` when a local reverse proxy will expose the application. Public binding and production hardening are covered in Deployment.
 </Tip>
+
+<CardGroup cols={2}>
+  <Card title="Project structure" icon="folder-tree" href="/getting-started/project-structure">
+    Organize routes, views, configuration, and application code.
+  </Card>
+
+  <Card title="Architecture" icon="diagram-project" href="/getting-started/architecture">
+    Understand what happens during startup and each request.
+  </Card>
+</CardGroup>

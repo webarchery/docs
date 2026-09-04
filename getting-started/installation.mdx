@@ -1,0 +1,96 @@
+---
+title: "Install Archery"
+sidebarTitle: "Installation"
+description: "Prepare a Dart project, install Archery 1.5.0, and create the default configuration and application directories."
+icon: "download"
+keywords:
+  - "install Archery"
+  - "Dart server framework"
+  - "Archery 1.5.0"
+---
+
+Archery 1.5.0 requires Dart 3.10 or later. This page prepares a new Dart package with the directories and configuration used throughout the documentation.
+
+## Prerequisites
+
+Confirm that the Dart SDK is installed:
+
+```bash
+dart --version
+```
+
+The reported version must be `3.10.0` or newer.
+
+<Card title="Install the Dart SDK" icon="dart-lang" href="https://dart.dev/get-dart">
+  Follow the official Dart installation instructions if the command is unavailable or reports an older version.
+</Card>
+
+## Create a Dart project
+
+```bash
+dart create -t console-full archery_app
+cd archery_app
+```
+
+The project name must follow Dart package naming rules: lowercase words separated by underscores.
+
+## Add Archery
+
+Install the current package from pub.dev:
+
+```bash
+dart pub add archery
+```
+
+This adds a compatible constraint to `pubspec.yaml` and resolves the package dependencies. The dependency should resemble:
+
+```yaml
+dependencies:
+  archery: ^1.5.0
+```
+
+## Create the application directories
+
+Archery does not require a code generator. Create the conventional directories used by its configuration, routes, templates, and public files:
+
+```bash
+mkdir -p bin
+mkdir -p lib/src/config
+mkdir -p lib/src/http/routes
+mkdir -p lib/src/http/views
+mkdir -p lib/src/http/public
+```
+
+<Note>
+  `AppConfig.create()`, `TemplateEngine`, and `StaticFilesServer` use these locations by default. You can customize several paths later through their constructors or configuration.
+</Note>
+
+## Add server configuration
+
+Create `lib/src/config/server.json`:
+
+```json
+{
+  "port": 5502,
+  "compress": true
+}
+```
+
+The filename becomes the first segment of each configuration key. These values are therefore available as `server.port` and `server.compress`.
+
+## Verify the installation
+
+```bash
+dart pub get
+dart analyze
+```
+
+A newly created project may still contain its generated console example. The next page replaces that entry point with an Archery HTTP server.
+
+<Warning>
+  Do not commit passwords, database credentials, AWS keys, or other secrets to JSON configuration files. Production secret injection is covered separately in the deployment documentation.
+</Warning>
+
+<Card title="Run the quickstart" icon="rocket" href="/getting-started/quickstart">
+  Boot Archery and serve your first HTTP response.
+</Card>
