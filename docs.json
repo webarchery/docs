@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "name": "Archery",
-  "theme": "mint",
+  "theme": "almond",
   "colors": {
     "primary": "#16A34A",
     "light": "#4ADE80",
